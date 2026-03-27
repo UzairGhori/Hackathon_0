@@ -1,0 +1,61 @@
+{
+  "task_id": "test1",
+  "title": "LinkedIn Post Draft",
+  "category": "Social Media",
+  "urgency": "MEDIUM",
+  "confidence": 0.7,
+  "metadata": {
+    "sender": "Not specified",
+    "deadline": "Not specified",
+    "description": "Write a professional LinkedIn post announcing that our company has launched a new AI-powered employee automation system.",
+    "required_action": "Write a professional LinkedIn post announcing that our company has launched a new AI-powered employee automation system.",
+    "recipients": [],
+    "attachments": []
+  },
+  "risk_score": 0.15,
+  "requires_approval": true,
+  "assigned_agent": "linkedin_agent",
+  "reasoning": "Category: Keyword match: linkedin, post | Priority: Keyword analysis: detected 5 requirements listed, risk:post",
+  "steps": [
+    "Read and understand the full task description.",
+    "Identify key requirements:",
+    "  -> The system helps automate repetitive office tasks.",
+    "  -> It improves productivity and saves time.",
+    "  -> It is designed for small and medium businesses.",
+    "  -> Keep the tone professional and engaging.",
+    "  -> The post should be 6\u20138 lines long.",
+    "Draft the social media post with appropriate tone.",
+    "Prepare hashtags and media attachments if needed.",
+    "Schedule or queue for approval.",
+    "Write the final output as a markdown file.",
+    "Route the output for review or approval."
+  ],
+  "urgency_signals": [
+    "5 requirements listed",
+    "risk:post"
+  ],
+  "suggested_deadline": "No deadline detected",
+  "keywords_detected": [
+    "linkedin",
+    "post"
+  ],
+  "sub_category": "Social Media",
+  "parse_method": "local",
+  "raw_content": "# LinkedIn Post Draft\n\nTask:\nWrite a professional LinkedIn post announcing that our company has launched a new AI-powered employee automation system.\n\nDetails:\n- The system helps automate repetitive office tasks.\n- It improves productivity and saves time.\n- It is designed for small and medium businesses.\n- Keep the tone professional and engaging.\n- The post should be 6\u20138 lines long.\n\nOutput format:\nProvide only the LinkedIn post text.\n",
+  "analyzed_at": "2026-03-11T15:45:12.067596",
+  "planner_decision": {
+    "action": "ask_manager",
+    "queue_status": "pending",
+    "scheduled_for": null,
+    "max_retries": 3
+  },
+  "summary": {
+    "task": "LinkedIn Post Draft",
+    "priority": "medium",
+    "action": "ask_manager",
+    "requires_approval": true,
+    "status": "pending",
+    "assigned_agent": "linkedin_agent",
+    "retries": 0
+  }
+}

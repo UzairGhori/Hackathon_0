@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .gitattributes — Platinum Tier vault sync
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Vault markdown: normalise to LF on all platforms
+vault/**/*.md          text eol=lf
+AI_Employee_Vault/**/*.md  text eol=lf
+
+# JSON state files: treat as binary to prevent git's auto-merge
+# (conflict_resolver.py handles these with semantic merge logic)
+vault/approval_queue.json        -merge
+vault/task_queue.json            -merge
+vault/gmail_processed_ids.json   -merge
+vault/linkedin_processed_ids.json -merge
+
+# Audit logs: append-only NDJSON — do not auto-merge
+ai_employee/logs/audit_log.json  -merge
+
+# Shell scripts: always LF
+scripts/*.sh  text eol=lf
+
+# Python: always LF
+*.py  text eol=lf

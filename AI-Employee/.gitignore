@@ -1,0 +1,48 @@
+# Environment variables (contains secrets)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Logs (generated at runtime)
+ai_employee/logs/*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Runtime artifacts
+nul
+
+# ── Sync safety (Platinum Tier) ──
+credentials.json
+token.json
+token.pickle
+*.token
+*.key
+.sync.lock
+
+# Runtime logs (NDJSON, generated at runtime)
+ai_employee/logs/*.json
+
+# Claude Code memory (local only)
+.claude/
+
+# Obsidian
+.obsidian/
+
+# Runtime state (vault)
+vault/memory.db
+vault/memory.json.bak
+vault/logs/

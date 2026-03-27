@@ -1,0 +1,53 @@
+# Approval Request — LinkedIn Post Draft
+
+---
+
+| Field             | Value                                |
+|-------------------|--------------------------------------|
+| Task ID           | `test1`                     |
+| Category          | Social Media                      |
+| Urgency           | **MEDIUM**                   |
+| Risk Score        | 15%                |
+| Assigned Agent    | `linkedin_agent`              |
+| Sender            | Not specified         |
+| Deadline          | Not specified       |
+| Requested         | 2026-03-11 15:45:14 |
+
+---
+
+## Description
+
+Write a professional LinkedIn post announcing that our company has launched a new AI-powered employee automation system.
+
+## Required Action
+
+Write a professional LinkedIn post announcing that our company has launched a new AI-powered employee automation system.
+
+## Execution Plan
+
+1. Read and understand the full task description.
+2. Identify key requirements:
+3.   -> The system helps automate repetitive office tasks.
+4.   -> It improves productivity and saves time.
+5.   -> It is designed for small and medium businesses.
+6.   -> Keep the tone professional and engaging.
+7.   -> The post should be 6–8 lines long.
+8. Draft the social media post with appropriate tone.
+9. Prepare hashtags and media attachments if needed.
+10. Schedule or queue for approval.
+11. Write the final output as a markdown file.
+12. Route the output for review or approval.
+
+---
+
+## Decision Reasoning
+
+> Category: Keyword match: linkedin, post | Priority: Keyword analysis: detected 5 requirements listed, risk:post
+
+---
+
+<!-- DECISION BELOW THIS LINE -->
+
+**Manager Decision:** PENDING
+
+*(Replace PENDING with APPROVED or REJECTED)*

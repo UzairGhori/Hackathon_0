@@ -1,0 +1,61 @@
+{
+  "task_id": "urgent-report",
+  "title": "Urgent Monthly Report",
+  "category": "Sales",
+  "urgency": "CRITICAL",
+  "confidence": 0.55,
+  "metadata": {
+    "sender": "Not specified",
+    "deadline": "day",
+    "description": "Summarize the monthly sales data and send it to the management team by end of day.",
+    "required_action": "Summarize the monthly sales data and send it to the management team by end of day.",
+    "recipients": [],
+    "attachments": []
+  },
+  "risk_score": 0.15,
+  "requires_approval": true,
+  "assigned_agent": "task_agent",
+  "reasoning": "Category: Keyword match: revenue, report | Priority: Keyword analysis: detected urgent, risk:send",
+  "steps": [
+    "Read and understand the full task description.",
+    "Identify key requirements:",
+    "  -> Include total revenue numbers",
+    "  -> Compare with last month",
+    "  -> Highlight top performing products",
+    "  -> Add recommendations for next month",
+    "  -> Keep it under 2 pages",
+    "Review the sales context and client history.",
+    "Draft the proposal or outreach material.",
+    "Include relevant metrics and value propositions.",
+    "Write the final output as a markdown file.",
+    "Route the output for review or approval."
+  ],
+  "urgency_signals": [
+    "urgent",
+    "risk:send"
+  ],
+  "suggested_deadline": "Today (end of day)",
+  "keywords_detected": [
+    "revenue",
+    "report"
+  ],
+  "sub_category": "Sales",
+  "parse_method": "local",
+  "raw_content": "# Urgent Monthly Report\n\nSummarize the monthly sales data and send it to the management team by end of day.\n\nRequirements:\n- Include total revenue numbers\n- Compare with last month\n- Highlight top performing products\n- Add recommendations for next month\n- Keep it under 2 pages\n",
+  "analyzed_at": "2026-03-11T15:45:14.449419",
+  "planner_decision": {
+    "action": "ask_manager",
+    "queue_status": "pending",
+    "scheduled_for": null,
+    "max_retries": 3
+  },
+  "summary": {
+    "task": "Urgent Monthly Report",
+    "priority": "critical",
+    "action": "ask_manager",
+    "requires_approval": true,
+    "status": "pending",
+    "assigned_agent": "task_agent",
+    "retries": 0
+  }
+}

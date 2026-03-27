@@ -1,0 +1,41 @@
+[
+  {
+    "request_id": "system-test-001",
+    "title": "Test Payment Approval",
+    "description": "System integration test",
+    "category": "financial",
+    "priority": "CRITICAL",
+    "risk_level": "high",
+    "source": "task_queue",
+    "source_agent": "task_agent",
+    "task_id": "",
+    "proposed_action": "Financial transaction: Test Payment Approval",
+    "context": "",
+    "safety_flags": [
+      "FINANCIAL: Test Payment Approval"
+    ],
+    "status": "rejected",
+    "decision_by": "system_test",
+    "decision_reason": "Test cleanup",
+    "decision_at": "2026-03-13T14:52:20.410641",
+    "created_at": "2026-03-13T14:52:20.408306",
+    "expires_at": "2026-03-14T14:52:20.408361",
+    "notified_at": "",
+    "metadata": {
+      "amount": "100",
+      "recipient": "Test Vendor"
+    },
+    "history": [
+      {
+        "action": "submitted",
+        "detail": "Request submitted to approval queue",
+        "timestamp": "2026-03-13T14:52:20.408379"
+      },
+      {
+        "action": "rejected",
+        "detail": "Rejected by system_test: Test cleanup",
+        "timestamp": "2026-03-13T14:52:20.410657"
+      }
+    ]
+  }
+]

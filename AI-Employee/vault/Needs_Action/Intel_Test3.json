@@ -1,0 +1,59 @@
+{
+  "task_id": "Test3",
+  "title": "Email Reply Request",
+  "category": "Communication",
+  "urgency": "LOW",
+  "confidence": 0.85,
+  "metadata": {
+    "sender": "Not specified",
+    "deadline": "Not specified",
+    "description": "client@example.com",
+    "required_action": "share the details regarding pricing, timeline, and requirements",
+    "recipients": [
+      "client@example.com"
+    ],
+    "attachments": []
+  },
+  "risk_score": 0.3,
+  "requires_approval": true,
+  "assigned_agent": "email_agent",
+  "reasoning": "Category: Keyword match: email, reply, respond, message, client | Priority: Keyword analysis: detected risk:send, risk:email",
+  "steps": [
+    "Read and understand the full task description.",
+    "Draft the response addressing all points raised.",
+    "Ensure tone matches the requested style.",
+    "Write the final output as a markdown file.",
+    "Route the output for review or approval."
+  ],
+  "urgency_signals": [
+    "risk:send",
+    "risk:email"
+  ],
+  "suggested_deadline": "No deadline detected",
+  "keywords_detected": [
+    "email",
+    "reply",
+    "respond",
+    "message",
+    "client"
+  ],
+  "sub_category": "Communication",
+  "parse_method": "local",
+  "raw_content": "# Email Reply Request\n\n## Sender\nclient@example.com\n\n## Subject\nRequest for Project Information\n\n## Message\nHello,\n\nI hope you are doing well.\n\nI would like to get more information about your services and the process of starting a new project with your team. Please share the details regarding pricing, timeline, and requirements.\n\nLooking forward to your response.\n\nBest regards  \nClient\n\n## Task\nWrite a professional email reply thanking the sender for their interest and informing them that our team will review the request and respond shortly with the required details.\n",
+  "analyzed_at": "2026-03-11T15:45:13.576171",
+  "planner_decision": {
+    "action": "ask_manager",
+    "queue_status": "pending",
+    "scheduled_for": null,
+    "max_retries": 3
+  },
+  "summary": {
+    "task": "Email Reply Request",
+    "priority": "low",
+    "action": "ask_manager",
+    "requires_approval": true,
+    "status": "pending",
+    "assigned_agent": "email_agent",
+    "retries": 0
+  }
+}

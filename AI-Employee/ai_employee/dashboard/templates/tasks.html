@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Tasks{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Page header -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Tasks</h1>
+        <p class="text-slate-400 text-sm mt-1">Task queue, history, and AI decision routing</p>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <p class="text-xs text-slate-400 uppercase">Total</p>
+            <p class="text-2xl font-bold text-white mt-1">{{ overview.get("total_tasks", 0) }}</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <p class="text-xs text-slate-400 uppercase">Auto-Completed</p>
+            <p class="text-2xl font-bold text-emerald-400 mt-1">{{ overview.get("auto_completed", 0) }}</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <p class="text-xs text-slate-400 uppercase">In Queue</p>
+            <p class="text-2xl font-bold text-blue-400 mt-1">{{ queue_summary.get("total", 0) }}</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <p class="text-xs text-slate-400 uppercase">Queue Pending</p>
+            <p class="text-2xl font-bold text-amber-400 mt-1">{{ queue_summary.get("by_status", {}).get("pending", 0) }}</p>
+        </div>
+    </div>
+
+    <!-- Category & Priority breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Categories -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Categories</h3>
+            {% if categories %}
+            <div class="space-y-3">
+                {% set max_cat = categories.values() | list | max if categories.values() | list else 1 %}
+                {% for cat, count in categories.items() %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-300">{{ cat }}</span>
+                        <span class="text-slate-400">{{ count }}</span>
+                    </div>
+                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-amber-500 rounded-full" style="width: {{ (count / max_cat * 100) | int }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-slate-500 text-center py-4">No data yet</p>
+            {% endif %}
+        </div>
+
+        <!-- Priorities -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Priority Breakdown</h3>
+            {% if priorities %}
+            <div class="space-y-3">
+                {% set max_pri = priorities.values() | list | max if priorities.values() | list else 1 %}
+                {% set pri_colors = {"CRITICAL": "bg-red-500", "HIGH": "bg-orange-500", "MEDIUM": "bg-amber-500", "LOW": "bg-slate-500"} %}
+                {% for pri, count in priorities.items() %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-300">{{ pri }}</span>
+                        <span class="text-slate-400">{{ count }}</span>
+                    </div>
+                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full {{ pri_colors.get(pri.upper(), 'bg-slate-500') }} rounded-full" style="width: {{ (count / max_pri * 100) | int }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-slate-500 text-center py-4">No data yet</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Active Queue -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+        <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Active Queue</h3>
+        {% if queue_tasks %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs text-slate-400 uppercase border-b border-slate-700">
+                        <th class="pb-3 pr-4">Status</th>
+                        <th class="pb-3 pr-4">Urgency</th>
+                        <th class="pb-3 pr-4">Title</th>
+                        <th class="pb-3 pr-4">Agent</th>
+                        <th class="pb-3 pr-4">Action</th>
+                        <th class="pb-3">Retries</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                    {% for t in queue_tasks %}
+                    <tr class="text-slate-300 hover:bg-slate-700/30">
+                        <td class="py-2.5 pr-4">
+                            {% set qs = t.get("status", "").lower() %}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                {% if qs == 'completed' %}bg-emerald-500/20 text-emerald-400
+                                {% elif qs in ('pending', 'scheduled') %}bg-blue-500/20 text-blue-400
+                                {% elif qs == 'running' %}bg-cyan-500/20 text-cyan-400
+                                {% elif qs == 'failed' %}bg-red-500/20 text-red-400
+                                {% elif qs == 'awaiting_approval' %}bg-purple-500/20 text-purple-400
+                                {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ qs }}</span>
+                        </td>
+                        <td class="py-2.5 pr-4">
+                            {% set u = t.get("urgency", "").upper() %}
+                            <span class="text-xs font-medium
+                                {% if u == 'CRITICAL' %}text-red-400
+                                {% elif u == 'HIGH' %}text-orange-400
+                                {% elif u == 'MEDIUM' %}text-amber-400
+                                {% else %}text-slate-400{% endif %}">{{ u }}</span>
+                        </td>
+                        <td class="py-2.5 pr-4 max-w-[250px] truncate">{{ t.get("title", "N/A") }}</td>
+                        <td class="py-2.5 pr-4 text-xs text-slate-400">{{ t.get("assigned_agent", "-") }}</td>
+                        <td class="py-2.5 pr-4 text-xs text-slate-400">{{ t.get("action", "-") }}</td>
+                        <td class="py-2.5 text-xs">
+                            {% if t.get("retries", 0) > 0 %}
+                            <span class="text-amber-400">{{ t.get("retries") }}/{{ t.get("max_retries", 3) }}</span>
+                            {% else %}
+                            <span class="text-slate-500">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-500 text-center py-6">Queue is empty</p>
+        {% endif %}
+    </div>
+
+    <!-- Task History -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+        <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Task History</h3>
+        {% if recent_tasks %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs text-slate-400 uppercase border-b border-slate-700">
+                        <th class="pb-3 pr-4">Title</th>
+                        <th class="pb-3 pr-4">Category</th>
+                        <th class="pb-3 pr-4">Priority</th>
+                        <th class="pb-3 pr-4">Status</th>
+                        <th class="pb-3">Time</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                    {% for task in recent_tasks %}
+                    <tr class="text-slate-300 hover:bg-slate-700/30">
+                        <td class="py-2.5 pr-4 max-w-[250px] truncate">{{ task.get("title", "N/A") }}</td>
+                        <td class="py-2.5 pr-4">
+                            <span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">{{ task.get("category", "N/A") }}</span>
+                        </td>
+                        <td class="py-2.5 pr-4">
+                            {% set p = task.get("priority", "").upper() %}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                {% if p == 'CRITICAL' %}bg-red-500/20 text-red-400
+                                {% elif p == 'HIGH' %}bg-orange-500/20 text-orange-400
+                                {% elif p == 'MEDIUM' %}bg-amber-500/20 text-amber-400
+                                {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ p or "N/A" }}</span>
+                        </td>
+                        <td class="py-2.5 pr-4">
+                            {% set s = task.get("status", "").lower() %}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                {% if s in ('completed', 'approved', 'auto_completed') %}bg-emerald-500/20 text-emerald-400
+                                {% elif s in ('pending', 'running') %}bg-blue-500/20 text-blue-400
+                                {% elif s in ('failed', 'rejected') %}bg-red-500/20 text-red-400
+                                {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ s or "N/A" }}</span>
+                        </td>
+                        <td class="py-2.5 text-xs text-slate-500">{{ task.get("timestamp", "") | format_dt }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-500 text-center py-6">No tasks processed yet</p>
+        {% endif %}
+    </div>
+
+    <!-- AI Decisions -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+        <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">AI Decisions</h3>
+        {% if decisions %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs text-slate-400 uppercase border-b border-slate-700">
+                        <th class="pb-3 pr-4">Task</th>
+                        <th class="pb-3 pr-4">Decision</th>
+                        <th class="pb-3 pr-4">Reason</th>
+                        <th class="pb-3">Time</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                    {% for d in decisions %}
+                    <tr class="text-slate-300 hover:bg-slate-700/30">
+                        <td class="py-2.5 pr-4 text-xs text-slate-400 max-w-[150px] truncate">{{ d.get("task_id", "N/A") }}</td>
+                        <td class="py-2.5 pr-4">
+                            {% set dec = d.get("decision", "").lower() %}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                {% if 'execute' in dec or 'auto' in dec %}bg-emerald-500/20 text-emerald-400
+                                {% elif 'approv' in dec or 'ask' in dec %}bg-amber-500/20 text-amber-400
+                                {% elif 'ignore' in dec or 'reject' in dec %}bg-slate-600/50 text-slate-400
+                                {% else %}bg-blue-500/20 text-blue-400{% endif %}">{{ d.get("decision", "N/A") }}</span>
+                        </td>
+                        <td class="py-2.5 pr-4 text-xs text-slate-400 max-w-[300px] truncate">{{ d.get("reason", "N/A") }}</td>
+                        <td class="py-2.5 text-xs text-slate-500">{{ d.get("created_at", d.get("timestamp", "")) | format_dt }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-500 text-center py-6">No AI decisions recorded yet</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "odoo-accounting": {
+      "command": "python",
+      "args": ["-m", "ai_employee.integrations.odoo_mcp_server"],
+      "cwd": "D:\\Quarter-4\\Hackathon_0\\AI-Employee"
+    }
+  }
+}

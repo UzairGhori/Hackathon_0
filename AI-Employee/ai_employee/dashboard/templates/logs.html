@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="logViewer()">
+
+    <!-- Page header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">System Logs</h1>
+            <p class="text-slate-400 text-sm mt-1">Structured log entries from all components</p>
+        </div>
+        <button @click="refreshLogs()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" :class="{ 'animate-spin': refreshing }" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
+            Refresh
+        </button>
+    </div>
+
+    <!-- Level filter tabs -->
+    <div class="flex items-center gap-1.5 bg-slate-800 rounded-lg p-1 w-fit border border-slate-700">
+        {% set levels = [("all", "All"), ("CRITICAL", "Critical"), ("ERROR", "Error"), ("WARNING", "Warning"), ("INFO", "Info"), ("DEBUG", "Debug")] %}
+        {% for key, label in levels %}
+        <button @click="filterLevel = '{{ key }}'"
+                :class="filterLevel === '{{ key }}'
+                    ? 'bg-slate-700 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200'"
+                class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors">
+            {{ label }}
+            <template x-if="filterLevel === 'all' || '{{ key }}' !== 'all'">
+                <span class="ml-1 text-[10px] opacity-60" x-text="countByLevel('{{ key }}')"></span>
+            </template>
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- Source filter -->
+    <div class="flex items-center gap-2" x-show="sources.length > 1" x-cloak>
+        <span class="text-xs text-slate-400">Source:</span>
+        <select x-model="filterSource"
+                class="px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-300 focus:border-amber-500 focus:outline-none">
+            <option value="all">All Sources</option>
+            <template x-for="src in sources" :key="src">
+                <option :value="src" x-text="src"></option>
+            </template>
+        </select>
+    </div>
+
+    <!-- Log table -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto max-h-[65vh] overflow-y-auto scrollbar-thin">
+            <table class="w-full text-xs font-mono">
+                <thead class="sticky top-0 bg-slate-800 z-10">
+                    <tr class="text-left text-[10px] text-slate-400 uppercase border-b border-slate-700">
+                        <th class="px-4 py-3 w-20">Level</th>
+                        <th class="px-4 py-3 w-44">Source</th>
+                        <th class="px-4 py-3">Message</th>
+                        <th class="px-4 py-3 w-36">Time</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/30">
+                    <template x-for="(entry, idx) in filteredLogs" :key="idx">
+                        <tr class="hover:bg-slate-700/20"
+                            :class="{
+                                'bg-red-500/5': (entry.level || '').toUpperCase() === 'CRITICAL',
+                                'bg-red-500/[0.02]': (entry.level || '').toUpperCase() === 'ERROR',
+                            }">
+                            <td class="px-4 py-2">
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                      :class="{
+                                          'bg-red-600 text-white': (entry.level || '').toUpperCase() === 'CRITICAL',
+                                          'bg-red-500/20 text-red-400': (entry.level || '').toUpperCase() === 'ERROR',
+                                          'bg-amber-500/20 text-amber-400': (entry.level || '').toUpperCase() === 'WARNING',
+                                          'bg-blue-500/20 text-blue-400': (entry.level || '').toUpperCase() === 'INFO',
+                                          'bg-slate-600/50 text-slate-400': (entry.level || '').toUpperCase() === 'DEBUG',
+                                      }"
+                                      x-text="(entry.level || 'N/A').toUpperCase()"></span>
+                            </td>
+                            <td class="px-4 py-2 text-slate-400 truncate max-w-[180px]" x-text="entry.source || 'N/A'"></td>
+                            <td class="px-4 py-2 text-slate-300 break-words" x-text="entry.message || 'N/A'"></td>
+                            <td class="px-4 py-2 text-slate-500 whitespace-nowrap" x-text="formatTime(entry.timestamp || entry.created_at)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+
+            <template x-if="filteredLogs.length === 0">
+                <div class="text-center py-12">
+                    <p class="text-sm text-slate-500">No log entries match the current filter</p>
+                </div>
+            </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-4 py-2.5 border-t border-slate-700 bg-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Showing <span class="text-slate-300" x-text="filteredLogs.length"></span> of <span class="text-slate-300" x-text="allLogs.length"></span> entries</span>
+            <span>Auto-refresh in <span x-text="refreshCountdown"></span>s</span>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function logViewer() {
+    return {
+        allLogs: {{ logs | tojson }},
+        filterLevel: 'all',
+        filterSource: 'all',
+        refreshing: false,
+        refreshCountdown: 30,
+        _interval: null,
+
+        init() {
+            this._interval = setInterval(() => {
+                this.refreshCountdown--;
+                if (this.refreshCountdown <= 0) {
+                    this.refreshLogs();
+                    this.refreshCountdown = 30;
+                }
+            }, 1000);
+        },
+
+        destroy() {
+            if (this._interval) clearInterval(this._interval);
+        },
+
+        get sources() {
+            const s = new Set();
+            this.allLogs.forEach(e => { if (e.source) s.add(e.source); });
+            return [...s].sort();
+        },
+
+        get filteredLogs() {
+            return this.allLogs.filter(e => {
+                if (this.filterLevel !== 'all' && (e.level || '').toUpperCase() !== this.filterLevel) return false;
+                if (this.filterSource !== 'all' && e.source !== this.filterSource) return false;
+                return true;
+            });
+        },
+
+        countByLevel(level) {
+            if (level === 'all') return this.allLogs.length;
+            return this.allLogs.filter(e => (e.level || '').toUpperCase() === level).length;
+        },
+
+        formatTime(ts) {
+            if (!ts) return '';
+            try {
+                const d = new Date(ts);
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch { return ts; }
+        },
+
+        async refreshLogs() {
+            this.refreshing = true;
+            try {
+                const res = await fetch('/api/logs?limit=200');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.allLogs = data.logs || [];
+                }
+            } catch (e) {
+                console.error('Failed to refresh logs:', e);
+            }
+            this.refreshing = false;
+            this.refreshCountdown = 30;
+        },
+    };
+}
+</script>
+{% endblock %}

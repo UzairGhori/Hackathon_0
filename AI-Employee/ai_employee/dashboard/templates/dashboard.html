@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Page header -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+        <p class="text-slate-400 text-sm mt-1">AI Employee system overview</p>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <p class="text-sm text-slate-400">Total Tasks</p>
+            <p class="text-3xl font-bold text-white mt-1">{{ overview.get("total_tasks", 0) }}</p>
+            <p class="text-xs text-slate-500 mt-2">All time processed</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <p class="text-sm text-slate-400">Auto-Completed</p>
+            <p class="text-3xl font-bold text-emerald-400 mt-1">{{ overview.get("auto_completed", 0) }}</p>
+            <p class="text-xs text-slate-500 mt-2">No human intervention</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <p class="text-sm text-slate-400">Approved</p>
+            <p class="text-3xl font-bold text-amber-400 mt-1">{{ overview.get("approved", 0) }}</p>
+            <p class="text-xs text-slate-500 mt-2">Manager approved</p>
+        </div>
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <p class="text-sm text-slate-400">Rejected</p>
+            <p class="text-3xl font-bold text-red-400 mt-1">{{ overview.get("rejected", 0) }}</p>
+            <p class="text-xs text-slate-500 mt-2">Declined by manager</p>
+        </div>
+    </div>
+
+    <!-- Pipeline queues -->
+    <div>
+        <h2 class="text-lg font-semibold text-white mb-3">Pipeline Queues</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {% set queue_items = [
+                ("Inbox", queues.get("inbox", 0), "bg-blue-500/10 text-blue-400 border-blue-500/20"),
+                ("Needs Action", queues.get("needs_action", 0), "bg-amber-500/10 text-amber-400 border-amber-500/20"),
+                ("Done", queues.get("done", 0), "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"),
+                ("Pending Approval", queues.get("pending_approval", 0), "bg-purple-500/10 text-purple-400 border-purple-500/20"),
+            ] %}
+            {% for label, count, colors in queue_items %}
+            <div class="rounded-lg border p-4 text-center {{ colors }}">
+                <p class="text-2xl font-bold">{{ count }}</p>
+                <p class="text-xs mt-1 opacity-80">{{ label }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick links + Recent tasks -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Quick links -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Quick Links</h3>
+            <div class="space-y-2">
+                <a href="/tasks" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-700/40 hover:bg-slate-700 transition-colors">
+                    <span class="text-sm text-slate-200">Task Queue</span>
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                </a>
+                <a href="/approvals" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-700/40 hover:bg-slate-700 transition-colors">
+                    <span class="text-sm text-slate-200">Pending Approvals</span>
+                    {% if pending_approvals > 0 %}
+                    <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500 text-white">{{ pending_approvals }}</span>
+                    {% else %}
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                    {% endif %}
+                </a>
+                <a href="/logs" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-700/40 hover:bg-slate-700 transition-colors">
+                    <span class="text-sm text-slate-200">System Logs</span>
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                </a>
+                <a href="/system" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-700/40 hover:bg-slate-700 transition-colors">
+                    <span class="text-sm text-slate-200">System Health</span>
+                    <span class="inline-flex items-center gap-1.5 text-xs {% if health_ok %}text-emerald-400{% else %}text-red-400{% endif %}">
+                        <span class="w-1.5 h-1.5 rounded-full {% if health_ok %}bg-emerald-400{% else %}bg-red-400{% endif %}"></span>
+                        {{ health_status }}
+                    </span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent tasks -->
+        <div class="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Recent Tasks</h3>
+                <a href="/tasks" class="text-xs text-amber-500 hover:text-amber-400">View all</a>
+            </div>
+            {% if recent_tasks %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs text-slate-400 uppercase">
+                            <th class="pb-2 pr-4">Title</th>
+                            <th class="pb-2 pr-4">Category</th>
+                            <th class="pb-2 pr-4">Priority</th>
+                            <th class="pb-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        {% for task in recent_tasks %}
+                        <tr class="text-slate-300">
+                            <td class="py-2.5 pr-4 max-w-[200px] truncate">{{ task.get("title", "N/A") }}</td>
+                            <td class="py-2.5 pr-4">
+                                <span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">{{ task.get("category", "N/A") }}</span>
+                            </td>
+                            <td class="py-2.5 pr-4">
+                                {% set p = task.get("priority", "").upper() %}
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                    {% if p == 'CRITICAL' %}bg-red-500/20 text-red-400
+                                    {% elif p == 'HIGH' %}bg-orange-500/20 text-orange-400
+                                    {% elif p == 'MEDIUM' %}bg-amber-500/20 text-amber-400
+                                    {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ p or "N/A" }}</span>
+                            </td>
+                            <td class="py-2.5">
+                                {% set s = task.get("status", "").lower() %}
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                    {% if s in ('completed', 'approved', 'auto_completed') %}bg-emerald-500/20 text-emerald-400
+                                    {% elif s in ('pending', 'running', 'scheduled') %}bg-blue-500/20 text-blue-400
+                                    {% elif s in ('failed', 'rejected') %}bg-red-500/20 text-red-400
+                                    {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ s or "N/A" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-sm text-slate-500 text-center py-8">No tasks processed yet</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

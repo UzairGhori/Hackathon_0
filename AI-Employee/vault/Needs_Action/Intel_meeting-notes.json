@@ -1,0 +1,61 @@
+{
+  "task_id": "meeting-notes",
+  "title": "Meeting Notes Summary",
+  "category": "Admin",
+  "urgency": "HIGH",
+  "confidence": 0.7,
+  "metadata": {
+    "sender": "Not specified",
+    "deadline": "today",
+    "description": "Summarize the key decisions from today meeting.",
+    "required_action": "Summarize the key decisions from today meeting.",
+    "recipients": [],
+    "attachments": []
+  },
+  "risk_score": 0.0,
+  "requires_approval": false,
+  "assigned_agent": "task_agent",
+  "reasoning": "Category: Keyword match: meeting, summary, onboarding, budget | Priority: Keyword analysis: detected today",
+  "steps": [
+    "Read and understand the full task description.",
+    "Identify key requirements:",
+    "  -> Budget approval for Q2",
+    "  -> New hire onboarding process",
+    "  -> Product launch timeline",
+    "  -> Customer feedback review",
+    "Gather all required information and documents.",
+    "Organize and format the output as requested.",
+    "Verify accuracy and completeness.",
+    "Write the final output as a markdown file.",
+    "Route the output for review or approval."
+  ],
+  "urgency_signals": [
+    "today"
+  ],
+  "suggested_deadline": "Today (end of day)",
+  "keywords_detected": [
+    "meeting",
+    "summary",
+    "onboarding",
+    "budget"
+  ],
+  "sub_category": "Admin",
+  "parse_method": "local",
+  "raw_content": "# Meeting Notes Summary\n\nSummarize the key decisions from today meeting.\n\nPoints discussed:\n- Budget approval for Q2\n- New hire onboarding process\n- Product launch timeline\n- Customer feedback review\n",
+  "analyzed_at": "2026-03-11T15:45:10.973127",
+  "planner_decision": {
+    "action": "execute_now",
+    "queue_status": "pending",
+    "scheduled_for": null,
+    "max_retries": 3
+  },
+  "summary": {
+    "task": "Meeting Notes Summary",
+    "priority": "high",
+    "action": "execute_now",
+    "requires_approval": false,
+    "status": "pending",
+    "assigned_agent": "task_agent",
+    "retries": 0
+  }
+}

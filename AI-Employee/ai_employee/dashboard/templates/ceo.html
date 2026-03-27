@@ -1,0 +1,588 @@
+{% extends "base.html" %}
+{% block title %}CEO Executive Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8" x-data="{ showReport: false, showAudit: false }">
+
+    <!-- Page header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">CEO Executive Dashboard</h1>
+            <p class="text-slate-400 text-sm mt-1">Full business intelligence snapshot</p>
+        </div>
+        <div class="text-right">
+            <p class="text-xs text-slate-500">Generated at</p>
+            <p class="text-sm text-slate-300">{{ generated_at | format_dt if generated_at else "N/A" }}</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         1. BUSINESS OVERVIEW — KPI Cards
+         ═══════════════════════════════════════════════════════════════ -->
+    <div>
+        <h2 class="text-lg font-semibold text-white mb-3">Business Overview</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 text-center">
+                <p class="text-sm text-slate-400">Total Tasks</p>
+                <p class="text-3xl font-bold text-white mt-1">{{ overview.get("total_tasks", 0) }}</p>
+                <p class="text-xs text-slate-500 mt-2">All time</p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 text-center">
+                <p class="text-sm text-slate-400">Auto-Completed</p>
+                <p class="text-3xl font-bold text-emerald-400 mt-1">{{ overview.get("auto_completed", 0) }}</p>
+                <p class="text-xs text-slate-500 mt-2">No intervention</p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 text-center">
+                <p class="text-sm text-slate-400">Automation Rate</p>
+                <p class="text-3xl font-bold text-amber-400 mt-1">{{ overview.get("automation_rate", 0) }}%</p>
+                <p class="text-xs text-slate-500 mt-2">Efficiency</p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 text-center">
+                <p class="text-sm text-slate-400">Active Agents</p>
+                <p class="text-3xl font-bold text-blue-400 mt-1">{{ overview.get("active_agents", 0) }}/{{ overview.get("total_agents", 0) }}</p>
+                <p class="text-xs text-slate-500 mt-2">Online</p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 text-center">
+                <p class="text-sm text-slate-400">Pending Approvals</p>
+                <p class="text-3xl font-bold {% if overview.get('pending_approvals', 0) > 0 %}text-red-400{% else %}text-slate-400{% endif %} mt-1">{{ overview.get("pending_approvals", 0) }}</p>
+                <p class="text-xs text-slate-500 mt-2">Awaiting decision</p>
+            </div>
+        </div>
+
+        <!-- Pipeline queues -->
+        {% set queues = overview.get("queues", {}) %}
+        {% if queues %}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+            {% set queue_items = [
+                ("Inbox", queues.get("inbox", 0), "bg-blue-500/10 text-blue-400 border-blue-500/20"),
+                ("Needs Action", queues.get("needs_action", 0), "bg-amber-500/10 text-amber-400 border-amber-500/20"),
+                ("Done", queues.get("done", 0), "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"),
+                ("Pending Approval", queues.get("pending_approval", 0), "bg-purple-500/10 text-purple-400 border-purple-500/20"),
+            ] %}
+            {% for label, count, colors in queue_items %}
+            <div class="rounded-lg border p-3 text-center {{ colors }}">
+                <p class="text-xl font-bold">{{ count }}</p>
+                <p class="text-xs mt-1 opacity-80">{{ label }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         MIDDLE ROW: Task Status + Approvals + Agent Performance
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 5. TASK STATUS -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Task Status</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">In Queue</span>
+                    <span class="text-white font-medium">{{ tasks.get("total_in_queue", 0) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Pending</span>
+                    <span class="text-amber-400 font-medium">{{ tasks.get("pending_in_queue", 0) }}</span>
+                </div>
+            </div>
+
+            {% set cats = tasks.get("category_distribution", {}) %}
+            {% if cats %}
+            <div class="mt-4 pt-4 border-t border-slate-700">
+                <p class="text-xs text-slate-500 uppercase mb-2">By Category</p>
+                {% for cat, count in cats.items() %}
+                <div class="flex justify-between text-sm py-1">
+                    <span class="text-slate-400">{{ cat }}</span>
+                    <span class="text-slate-300">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% set pris = tasks.get("priority_breakdown", {}) %}
+            {% if pris %}
+            <div class="mt-4 pt-4 border-t border-slate-700">
+                <p class="text-xs text-slate-500 uppercase mb-2">By Priority</p>
+                {% for pri, count in pris.items() %}
+                <div class="flex justify-between text-sm py-1">
+                    <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                        {% if pri.upper() == 'CRITICAL' %}bg-red-500/20 text-red-400
+                        {% elif pri.upper() == 'HIGH' %}bg-orange-500/20 text-orange-400
+                        {% elif pri.upper() == 'MEDIUM' %}bg-amber-500/20 text-amber-400
+                        {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ pri }}</span>
+                    <span class="text-slate-300">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- APPROVALS -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Approvals</h3>
+                <a href="/approvals" class="text-xs text-amber-500 hover:text-amber-400">Manage</a>
+            </div>
+            {% if approvals.get("available", False) %}
+            <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Pending</span>
+                    <span class="{% if approvals.get('pending_count', 0) > 0 %}text-red-400{% else %}text-emerald-400{% endif %} font-medium">{{ approvals.get("pending_count", 0) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Approved</span>
+                    <span class="text-emerald-400 font-medium">{{ approvals.get("approved_count", 0) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Rejected</span>
+                    <span class="text-red-400 font-medium">{{ approvals.get("rejected_count", 0) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Expired</span>
+                    <span class="text-slate-400 font-medium">{{ approvals.get("expired_count", 0) }}</span>
+                </div>
+                <div class="flex justify-between text-sm border-t border-slate-700 pt-2">
+                    <span class="text-slate-400">Total</span>
+                    <span class="text-white font-medium">{{ approvals.get("total", 0) }}</span>
+                </div>
+            </div>
+
+            {% set pending_items = approvals.get("pending_items", []) %}
+            {% if pending_items %}
+            <div class="mt-4 pt-4 border-t border-slate-700">
+                <p class="text-xs text-slate-500 uppercase mb-2">Awaiting Decision</p>
+                {% for item in pending_items %}
+                <div class="py-2 {% if not loop.last %}border-b border-slate-700/50{% endif %}">
+                    <p class="text-sm text-slate-200 truncate">{{ item.get("title", "Untitled") }}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ item.get("category", "") }} &middot; {{ item.get("created_at", "") | format_dt }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% else %}
+            <p class="text-sm text-slate-500 text-center py-4">Approval system not available</p>
+            {% endif %}
+        </div>
+
+        <!-- AGENT PERFORMANCE -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Agent Performance</h3>
+            {% if agents.get("available", False) %}
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full {% if agents.get('overall_health') == 'healthy' %}bg-emerald-500{% elif agents.get('overall_health') == 'degraded' %}bg-amber-500{% else %}bg-red-500{% endif %}"></span>
+                <span class="text-sm text-slate-300">{{ agents.get("overall_health", "unknown") | upper }}</span>
+                <span class="text-xs text-slate-500 ml-auto">{{ agents.get("healthy_count", 0) }}/{{ agents.get("total_count", 0) }} healthy</span>
+            </div>
+            <div class="space-y-2">
+                {% for agent in agents.get("agents", []) %}
+                <div class="flex items-center justify-between text-sm py-1.5 {% if not loop.last %}border-b border-slate-700/50{% endif %}">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full
+                            {% if agent.get('health') == 'healthy' %}bg-emerald-500
+                            {% elif agent.get('health') == 'degraded' %}bg-amber-500
+                            {% else %}bg-red-500{% endif %}"></span>
+                        <span class="text-slate-300">{{ agent.get("name", "") }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs {% if agent.get('success_rate', 0) >= 90 %}text-emerald-400{% elif agent.get('success_rate', 0) >= 70 %}text-amber-400{% else %}text-red-400{% endif %}">{{ agent.get("success_rate", 0) }}%</span>
+                        <span class="text-xs text-slate-500">{{ agent.get("total_calls", 0) }} calls</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <!-- Fallback: show agents from overview -->
+            {% set agent_list = overview.get("agents", []) %}
+            {% if agent_list %}
+            <div class="space-y-2">
+                {% for agent in agent_list %}
+                <div class="flex items-center justify-between text-sm py-1.5 {% if not loop.last %}border-b border-slate-700/50{% endif %}">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full {% if agent.get('enabled') %}bg-emerald-500{% else %}bg-slate-500{% endif %}"></span>
+                        <span class="text-slate-300">{{ agent.get("name", "") }}</span>
+                    </div>
+                    <span class="text-xs {% if agent.get('enabled') %}text-emerald-400{% else %}text-slate-500{% endif %}">{{ "enabled" if agent.get("enabled") else "disabled" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-slate-500 text-center py-4">No agent data available</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         3. SOCIAL MEDIA METRICS
+         ═══════════════════════════════════════════════════════════════ -->
+    <div>
+        <h2 class="text-lg font-semibold text-white mb-3">Social Media Metrics</h2>
+        {% if social.get("available", False) %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Facebook -->
+            {% set fb = social.get("facebook", {}) %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    <span class="text-sm font-semibold text-slate-200">Facebook</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <p class="text-2xl font-bold text-white">{{ fb.get("posts", 0) }}</p>
+                        <p class="text-xs text-slate-500">Posts</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-blue-400">{{ fb.get("engagements", 0) }}</p>
+                        <p class="text-xs text-slate-500">Engagements</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-slate-300">{{ fb.get("likes", 0) }}</p>
+                        <p class="text-xs text-slate-500">Likes</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-slate-300">{{ fb.get("comments", 0) }}</p>
+                        <p class="text-xs text-slate-500">Comments</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instagram -->
+            {% set ig = social.get("instagram", {}) %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-pink-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                    <span class="text-sm font-semibold text-slate-200">Instagram</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <p class="text-2xl font-bold text-white">{{ ig.get("posts", 0) }}</p>
+                        <p class="text-xs text-slate-500">Posts</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-pink-400">{{ ig.get("engagements", 0) }}</p>
+                        <p class="text-xs text-slate-500">Engagements</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-slate-300">{{ ig.get("likes", 0) }}</p>
+                        <p class="text-xs text-slate-500">Likes</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-slate-300">{{ ig.get("comments", 0) }}</p>
+                        <p class="text-xs text-slate-500">Comments</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Summary -->
+            {% set weekly = social.get("weekly_summary", {}) %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+                    <span class="text-sm font-semibold text-slate-200">Weekly Combined</span>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-3xl font-bold text-amber-400">{{ weekly.get("total_posts", 0) }}</p>
+                        <p class="text-xs text-slate-500">Total Posts</p>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-bold text-emerald-400">{{ weekly.get("total_engagements", 0) }}</p>
+                        <p class="text-xs text-slate-500">Total Engagements</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center">
+            <p class="text-slate-500">{{ social.get("reason", "Social media metrics not available") }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         4. ACCOUNTING SUMMARY
+         ═══════════════════════════════════════════════════════════════ -->
+    <div>
+        <h2 class="text-lg font-semibold text-white mb-3">Accounting Summary</h2>
+        {% if accounting.get("available", False) %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Profit & Loss -->
+            {% set pl = accounting.get("profit_loss", {}) %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Profit & Loss</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">Income</span>
+                        <span class="text-emerald-400 font-medium">{{ "{:,.2f}".format(pl.get("income", 0)) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">Expenses</span>
+                        <span class="text-red-400 font-medium">{{ "{:,.2f}".format(pl.get("expenses", 0)) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm border-t border-slate-700 pt-2">
+                        <span class="text-white font-medium">Net Profit</span>
+                        <span class="{% if pl.get('net_profit', 0) >= 0 %}text-emerald-400{% else %}text-red-400{% endif %} font-bold text-lg">{{ "{:,.2f}".format(pl.get("net_profit", 0)) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Sheet -->
+            {% set bs = accounting.get("balance_sheet", {}) %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Balance Sheet</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">Assets</span>
+                        <span class="text-emerald-400 font-medium">{{ "{:,.2f}".format(bs.get("assets", 0)) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">Liabilities</span>
+                        <span class="text-red-400 font-medium">{{ "{:,.2f}".format(bs.get("liabilities", 0)) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm border-t border-slate-700 pt-2">
+                        <span class="text-white font-medium">Equity</span>
+                        <span class="text-amber-400 font-bold text-lg">{{ "{:,.2f}".format(bs.get("equity", 0)) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Invoices -->
+            {% set overdue = accounting.get("overdue_invoices", {}) %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Overdue Invoices</h3>
+                <div class="flex items-baseline gap-3 mb-3">
+                    <span class="text-3xl font-bold {% if overdue.get('count', 0) > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">{{ overdue.get("count", 0) }}</span>
+                    <span class="text-sm text-slate-500">invoices</span>
+                </div>
+                {% if overdue.get("count", 0) > 0 %}
+                <p class="text-sm text-red-400 font-medium mb-3">Total: {{ "{:,.2f}".format(overdue.get("total_amount", 0)) }}</p>
+                {% for inv in overdue.get("items", []) %}
+                <div class="text-xs text-slate-400 py-1 {% if not loop.last %}border-b border-slate-700/50{% endif %}">
+                    <span class="text-slate-300">{{ inv.get("partner", "Unknown") }}</span>
+                    — {{ "{:,.2f}".format(inv.get("amount_due", 0)) }}
+                    <span class="text-red-400">({{ inv.get("days_overdue", 0) }}d)</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-sm text-emerald-400">All invoices current</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center">
+            <p class="text-slate-500">{{ accounting.get("reason", "Accounting data not available") }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         2. WEEKLY AUDIT REPORT
+         ═══════════════════════════════════════════════════════════════ -->
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-white">Weekly Audit Report</h2>
+            {% if report.get("available", False) %}
+            <button @click="showReport = !showReport"
+                    class="text-xs px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
+                <span x-text="showReport ? 'Hide Report' : 'Show Report'"></span>
+            </button>
+            {% endif %}
+        </div>
+
+        {% if report.get("available", False) %}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <p class="text-xs text-slate-500 uppercase">Latest Report</p>
+                <p class="text-sm text-slate-200 mt-1 truncate">{{ report.get("latest_file", "N/A") }}</p>
+                <p class="text-xs text-slate-500 mt-1">{{ report.get("latest_modified", "") | format_dt }}</p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <p class="text-xs text-slate-500 uppercase">Total Reports</p>
+                <p class="text-2xl font-bold text-white mt-1">{{ report.get("total_reports", 0) }}</p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <p class="text-xs text-slate-500 uppercase">Audit Agent</p>
+                <p class="text-sm mt-1 {% if report.get('audit_enabled') %}text-emerald-400{% else %}text-slate-500{% endif %}">
+                    {{ "Enabled" if report.get("audit_enabled") else "Disabled" }}
+                </p>
+            </div>
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-4 flex items-center justify-center">
+                <a href="/briefings" class="text-sm text-amber-500 hover:text-amber-400">View All Reports &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Report history -->
+        {% set reports_list = report.get("reports", []) %}
+        {% if reports_list %}
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
+            <p class="text-xs text-slate-500 uppercase mb-2">Recent Reports</p>
+            <div class="space-y-1">
+                {% for r in reports_list[:5] %}
+                <div class="flex items-center justify-between text-sm py-1 {% if not loop.last %}border-b border-slate-700/50{% endif %}">
+                    <span class="text-slate-300 truncate mr-4">{{ r.get("name", "") }}</span>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <span class="text-xs text-slate-500">{{ r.get("size_kb", 0) }} KB</span>
+                        <span class="text-xs text-slate-500">{{ r.get("modified", "") | format_dt }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Collapsible report content -->
+        <div x-show="showReport" x-cloak x-transition
+             class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h4 class="text-sm font-semibold text-slate-300 mb-3">Latest Briefing Content</h4>
+            <div class="prose prose-invert prose-sm max-w-none text-slate-300 overflow-y-auto max-h-96 scrollbar-thin">
+                <pre class="whitespace-pre-wrap text-xs text-slate-400 bg-slate-900 rounded-lg p-4">{{ report.get("content", "No content available") }}</pre>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center">
+            <p class="text-slate-500">{{ report.get("reason", "Weekly reports not available") }}</p>
+            <a href="/briefings" class="text-xs text-amber-500 hover:text-amber-400 mt-2 inline-block">Go to Briefings &rarr;</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ERROR HEALTH + AUDIT TRAIL
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Error Health -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">Error Recovery Health</h3>
+            {% set err = errors.get("errors", {}) %}
+            {% set ret = errors.get("retries", {}) %}
+            {% set fb = errors.get("fallbacks", {}) %}
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold {% if err.get('total_errors', 0) > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">{{ err.get("total_errors", 0) }}</p>
+                    <p class="text-xs text-slate-500">Errors</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-amber-400">{{ ret.get("total_retries", 0) }}</p>
+                    <p class="text-xs text-slate-500">Retries</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-blue-400">{{ fb.get("total_fallbacks", 0) }}</p>
+                    <p class="text-xs text-slate-500">Fallbacks</p>
+                </div>
+            </div>
+
+            {% if fb.get("total_fallbacks", 0) > 0 %}
+            <div class="border-t border-slate-700 pt-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Fallback success</span>
+                    <span class="text-emerald-400">{{ fb.get("succeeded", 0) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Fallback failed</span>
+                    <span class="text-red-400">{{ fb.get("failed", 0) }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Audit Trail Summary -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Audit Trail</h3>
+                {% if audit.get("available", False) %}
+                <button @click="showAudit = !showAudit"
+                        class="text-xs px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
+                    <span x-text="showAudit ? 'Hide Details' : 'Show Details'"></span>
+                </button>
+                {% endif %}
+            </div>
+            {% if audit.get("available", False) %}
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-white">{{ audit.get("total_entries", 0) }}</p>
+                    <p class="text-xs text-slate-500">Total Entries</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold {% if audit.get('error_count', 0) > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">{{ audit.get("error_count", 0) }}</p>
+                    <p class="text-xs text-slate-500">Errors Logged</p>
+                </div>
+            </div>
+
+            <!-- Collapsible recent entries -->
+            <div x-show="showAudit" x-cloak x-transition class="border-t border-slate-700 pt-3">
+                <p class="text-xs text-slate-500 uppercase mb-2">Recent Events</p>
+                <div class="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
+                    {% for entry in audit.get("recent", [])[:15] %}
+                    <div class="text-xs py-1 {% if not loop.last %}border-b border-slate-700/50{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <span class="{% if entry.get('severity') == 'ERROR' or entry.get('severity') == 'CRITICAL' %}text-red-400{% elif entry.get('severity') == 'WARNING' %}text-amber-400{% else %}text-slate-400{% endif %}">
+                                {{ entry.get("event", "") }}
+                            </span>
+                            <span class="text-slate-600">{{ entry.get("timestamp", "") | format_dt }}</span>
+                        </div>
+                        <p class="text-slate-500 truncate">{{ entry.get("summary", "") }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-sm text-slate-500 text-center py-4">Audit logger not available</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Tasks Table -->
+    {% set recent = tasks.get("recent_tasks", []) %}
+    {% if recent %}
+    <div class="bg-slate-800 rounded-xl border border-slate-700 p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Recent Tasks</h3>
+            <a href="/tasks" class="text-xs text-amber-500 hover:text-amber-400">View all</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs text-slate-400 uppercase">
+                        <th class="pb-2 pr-4">Title</th>
+                        <th class="pb-2 pr-4">Category</th>
+                        <th class="pb-2 pr-4">Priority</th>
+                        <th class="pb-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/50">
+                    {% for task in recent[-10:] %}
+                    <tr class="text-slate-300">
+                        <td class="py-2.5 pr-4 max-w-[250px] truncate">{{ task.get("title", "N/A") }}</td>
+                        <td class="py-2.5 pr-4">
+                            <span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">{{ task.get("category", "N/A") }}</span>
+                        </td>
+                        <td class="py-2.5 pr-4">
+                            {% set p = task.get("priority", "").upper() %}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                {% if p == 'CRITICAL' %}bg-red-500/20 text-red-400
+                                {% elif p == 'HIGH' %}bg-orange-500/20 text-orange-400
+                                {% elif p == 'MEDIUM' %}bg-amber-500/20 text-amber-400
+                                {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ p or "N/A" }}</span>
+                        </td>
+                        <td class="py-2.5">
+                            {% set s = task.get("status", "").lower() %}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                                {% if s in ('completed', 'approved', 'auto_completed') %}bg-emerald-500/20 text-emerald-400
+                                {% elif s in ('pending', 'running', 'scheduled') %}bg-blue-500/20 text-blue-400
+                                {% elif s in ('failed', 'rejected') %}bg-red-500/20 text-red-400
+                                {% else %}bg-slate-600/50 text-slate-400{% endif %}">{{ s or "N/A" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
