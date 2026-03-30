@@ -1,7 +1,7 @@
 """
-AI Employee — Gold Tier
+AI Employee — Platinum Tier
 Autonomous AI Employee System with modular architecture.
 """
 
-__version__ = "2.0.0"
-__tier__ = "GOLD"
+__version__ = "3.0.0"
+__tier__ = "PLATINUM"

@@ -58,6 +58,7 @@ from ai_employee.agents.odoo_agent import OdooAgent
 from ai_employee.agents.meta_agent import MetaAgent
 from ai_employee.agents.twitter_agent import TwitterAgent
 from ai_employee.agents.audit_agent import AuditAgent
+from ai_employee.agents.executive_brief_generator import ExecutiveBriefGenerator
 from ai_employee.integrations.odoo_client import OdooClient
 from ai_employee.integrations.meta_client import MetaClient
 from ai_employee.integrations.twitter_client import TwitterClient
@@ -261,6 +262,16 @@ class AIEmployee:
             log_dir=settings.log_dir,
         )
 
+        self.brief_generator = ExecutiveBriefGenerator(
+            odoo=self.odoo,
+            meta=self.meta,
+            twitter=self.twitter,
+            gmail_reader=self.gmail_reader,
+            gmail_send_log_path=settings.gmail_send_log_path,
+            output_dir=settings.briefing_dir,
+            log_dir=settings.log_dir,
+        )
+
         self._agent_map = {
             "email_agent": self.email_agent,
             "gmail_agent": self.gmail_agent,
@@ -269,6 +280,7 @@ class AIEmployee:
             "meta_agent": self.meta_agent,
             "twitter_agent": self.twitter_agent,
             "audit_agent": self.audit_agent,
+            "executive_brief_generator": self.brief_generator,
             "task_agent": self.task_agent,
         }
 
@@ -1217,6 +1229,8 @@ def main():
                         help="Process Twitter/X once and exit")
     parser.add_argument("--audit", action="store_true",
                         help="Generate weekly CEO briefing and exit")
+    parser.add_argument("--brief", action="store_true",
+                        help="Generate CEO Executive Brief and exit")
     parser.add_argument("--mcp-status", action="store_true",
                         help="Show MCP server registry and status, then exit")
     parser.add_argument("--ralph", type=str, default=None, metavar="TASK",
@@ -1355,6 +1369,17 @@ def main():
         log.info("")
         count = employee.phase_audit()
         log.info("  AUDIT   | Generated %d briefing(s)", count)
+        return
+
+    if args.brief:
+        employee.boot()
+        log.info("  MODE    | CEO Executive Brief generation")
+        log.info("")
+        try:
+            path = employee.brief_generator.generate_brief()
+            log.info("  BRIEF   | [OK] Executive Brief saved: %s", path.name)
+        except Exception as exc:
+            log.error("  BRIEF   | FAILED: %s", exc)
         return
 
     if args.mcp_status:

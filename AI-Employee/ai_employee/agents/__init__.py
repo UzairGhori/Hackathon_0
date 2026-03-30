@@ -6,5 +6,16 @@ from .meta_agent import MetaAgent
 from .twitter_agent import TwitterAgent
 from .audit_agent import AuditAgent
 from .task_agent import TaskAgent
+from .executive_brief_generator import ExecutiveBriefGenerator
 
-__all__ = ["AuditAgent", "EmailAgent", "GmailAgent", "LinkedInAgent", "MetaAgent", "OdooAgent", "TaskAgent", "TwitterAgent"]
+__all__ = [
+    "AuditAgent",
+    "EmailAgent",
+    "ExecutiveBriefGenerator",
+    "GmailAgent",
+    "LinkedInAgent",
+    "MetaAgent",
+    "OdooAgent",
+    "TaskAgent",
+    "TwitterAgent",
+]

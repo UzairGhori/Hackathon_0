@@ -1,0 +1,60 @@
+# ══════════════════════════════════════════════════════════════════
+#  AI Employee — Systemd Service Unit
+#
+#  Runs the full production stack via Docker Compose as a system
+#  service. Auto-starts on boot, auto-restarts on failure.
+#
+#  Install:
+#    sudo cp deploy/ai-employee.service /etc/systemd/system/
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable ai-employee
+#    sudo systemctl start ai-employee
+#
+#  Manage:
+#    sudo systemctl status ai-employee
+#    sudo systemctl stop ai-employee
+#    sudo systemctl restart ai-employee
+#    sudo journalctl -u ai-employee -f
+# ══════════════════════════════════════════════════════════════════
+
+[Unit]
+Description=AI Employee - Autonomous Digital Worker (Platinum Tier)
+Documentation=https://github.com/YOUR_USERNAME/AI-Employee
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/ai-employee
+
+# Start the full production stack
+ExecStart=/usr/bin/docker compose -f docker-compose.production.yml up -d --build --remove-orphans
+
+# Graceful shutdown
+ExecStop=/usr/bin/docker compose -f docker-compose.production.yml down --timeout 30
+
+# Restart policy
+Restart=on-failure
+RestartSec=30
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Security hardening
+ProtectSystem=full
+PrivateTmp=true
+NoNewPrivileges=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ai-employee
+
+# Environment
+Environment=COMPOSE_PROJECT_NAME=ai-employee
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,183 @@
+# ══════════════════════════════════════════════════════════════════
+#  AI Employee — Production Stack (Oracle Cloud Free Tier)
+#
+#  Services:
+#    1. ai-employee   — Main Python runtime (24/7 autonomous worker)
+#    2. odoo-db       — PostgreSQL 16 for Odoo ERP
+#    3. odoo          — Odoo 18 Community (Accounting)
+#    4. nginx         — Reverse proxy (dashboard + Odoo)
+#    5. watchtower    — Auto-update containers from registry
+#
+#  Usage:
+#    docker compose -f docker-compose.production.yml up -d
+#    docker compose -f docker-compose.production.yml logs -f ai-employee
+#    docker compose -f docker-compose.production.yml down
+# ══════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── AI Employee (Main Runtime) ────────────────────────────────
+  ai-employee:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-employee
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DASHBOARD_HOST=0.0.0.0
+      - DASHBOARD_PORT=8080
+      - ODOO_URL=http://odoo:8069
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./vault:/app/vault
+      - ./AI_Employee_Vault:/app/AI_Employee_Vault
+      - ai-employee-logs:/app/ai_employee/logs
+      - ./.env:/app/.env:ro
+    depends_on:
+      odoo:
+        condition: service_started
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ── PostgreSQL (Odoo Database) ────────────────────────────────
+  odoo-db:
+    image: postgres:16
+    container_name: odoo-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ── Odoo 18 (ERP / Accounting) ───────────────────────────────
+  odoo:
+    image: odoo:18.0
+    container_name: odoo-server
+    restart: always
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    environment:
+      HOST: odoo-db
+      PORT: 5432
+      USER: odoo
+      PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - odoo-addons:/mnt/extra-addons
+    networks:
+      - ai-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "3"
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: ai-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx-certs:/etc/nginx/certs
+    depends_on:
+      - ai-employee
+      - odoo
+    networks:
+      - ai-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Watchtower (Auto-Update) ─────────────────────────────────
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: always
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_POLL_INTERVAL: 86400
+      WATCHTOWER_INCLUDE_STOPPED: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ai-network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.1"
+
+# ── Volumes ────────────────────────────────────────────────────
+volumes:
+  odoo-db-data:
+    driver: local
+  odoo-data:
+    driver: local
+  odoo-addons:
+    driver: local
+  ai-employee-logs:
+    driver: local
+  nginx-certs:
+    driver: local
+
+# ── Network ────────────────────────────────────────────────────
+networks:
+  ai-network:
+    driver: bridge
