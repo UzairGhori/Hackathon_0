@@ -1,6 +1,6 @@
 # CEO Weekly Briefing
 **Period:** 2026-03-24 — 2026-03-31
-**Generated:** 2026-03-31 20:59:50
+**Generated:** 2026-03-31 21:06:50
 
 ---
 
