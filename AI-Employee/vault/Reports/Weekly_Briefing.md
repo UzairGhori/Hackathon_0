@@ -1,6 +1,6 @@
 # CEO Weekly Briefing
 **Period:** 2026-03-24 — 2026-03-31
-**Generated:** 2026-03-31 20:33:51
+**Generated:** 2026-03-31 20:39:51
 
 ---
 
@@ -24,14 +24,16 @@
 - Period: 2026-03-24 to 2026-03-31
 
 ## Key Emails
-- Total unread: 50
+- Total unread: 45
 - Financial flagged: 0
-- Requiring attention: 0
+- Requiring attention: 1
 - Sent this week: 0
 - Drafted this week: 0
+- Notable threads:
+  - [sensitive] Important Update to GitHub Copilot Interaction Data Usage Policy — from GitHub
 
 ## Risks
-- **[MEDIUM]** 50 unread emails in inbox — potential backlog
+- **[MEDIUM]** 45 unread emails in inbox — potential backlog
 
 ## Opportunities
 - 1 email(s) with potential business opportunities
