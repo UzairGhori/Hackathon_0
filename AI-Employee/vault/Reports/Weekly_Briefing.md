@@ -1,6 +1,6 @@
 # CEO Weekly Briefing
-**Period:** 2026-03-24 — 2026-03-31
-**Generated:** 2026-03-31 21:27:23
+**Period:** 2026-03-27 — 2026-04-03
+**Generated:** 2026-04-03 21:28:14
 
 ---
 
@@ -21,17 +21,17 @@
 - Instagram: 0 posts, 0 engagements (likes: 0, comments: 0)
 - Total engagements: 0
 - Top performing post: N/A
-- Period: 2026-03-24 to 2026-03-31
+- Period: 2026-03-27 to 2026-04-03
 
 ## Key Emails
-- Total unread: 43
+- Total unread: 44
 - Financial flagged: 0
 - Requiring attention: 0
 - Sent this week: 0
 - Drafted this week: 0
 
 ## Risks
-- **[MEDIUM]** 43 unread emails in inbox — potential backlog
+- **[MEDIUM]** 44 unread emails in inbox — potential backlog
 
 ## Opportunities
 - 1 email(s) with potential business opportunities
